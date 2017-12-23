@@ -1,7 +1,9 @@
 import express from "express";
+
 import User from "../models/User";
 import parseErrors from "../utils/parseErrors";
 import { sendConfirmationEmail } from "../mailer";
+import authenticate from '../middlewares/authenticate';
 
 const router = express.Router();
 
@@ -17,6 +19,21 @@ router.post("/", (req, res) => {
       res.json({ user: userRecord.toAuthJSON() });
     })
     .catch(err => res.status(400).json({ errors: parseErrors(err.errors) }));
+});
+
+router.get('/current_user', authenticate, (req, res) => {
+  if (req.currentUser) {
+    res.json({
+        user: {
+          email: req.currentUser.email,
+          username: req.currentUser.username,
+          confirmed: req.currentUser.confirmed,
+        }
+      }
+    )
+  } else {
+    res.status(401).json({ errors: { global: "!!!No token" } });
+  }
 });
 
 export default router;
